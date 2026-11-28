@@ -302,6 +302,8 @@ async def _person_sections_scenario() -> dict[str, Any]:
         for section in PERSON_SECTIONS
     ]
     page.script("evaluate:root_content", *roots)
+    # skills wheel-loads (issue #590): a list that never grows stops after 3 tries
+    page.script("evaluate:wheel_load_text_length", 100, 100, 100, 100)
     _script_profile_target(page)
     page.declare_locator("main button", "show_more")
     page.declare_derived(
@@ -1123,6 +1125,10 @@ async def _sidebar_scenario() -> dict[str, Any]:
     )
 
 
+# What the page reports for its zone: the zone message times are rendered in.
+PAGE_TIME_ZONE = {"id": "Europe/Berlin", "offsetMinutes": 60}
+
+
 async def _conversation_scenario(method: str) -> dict[str, Any]:
     name = f"{method}__baseline"
     recorder = TraceRecorder(name, _COMMON_ALLOWED)
@@ -1137,6 +1143,7 @@ async def _conversation_scenario(method: str) -> dict[str, Any]:
             "wait_for_selector:conversation_rows",
             PlaywrightTimeoutError("no scripted rows"),
         )
+    page.script("evaluate:page_time_zone", PAGE_TIME_ZONE)
     extractor = _extractor(page)
     async with boundaries(recorder, clock):
         with recorder.context(method, "conversation"):
@@ -1251,6 +1258,7 @@ async def _conversation_row_resolution_scenario() -> dict[str, Any]:
     page.script("evaluate:root_content", _root("Conversation content"))
     page.script("wait_for_selector:conversation_rows", None)
     page.script("evaluate:conversation_thread_refs", ROW_CLICK_STOPPED_OUTCOME)
+    page.script("evaluate:page_time_zone", PAGE_TIME_ZONE)
     extractor = _extractor(page)
     async with boundaries(recorder, clock):
         with recorder.context("get_inbox", "conversation"):

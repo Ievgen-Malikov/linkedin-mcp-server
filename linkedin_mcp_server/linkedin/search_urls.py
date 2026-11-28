@@ -42,6 +42,14 @@ WORK_TYPE_MAP = {"on_site": "1", "remote": "2", "hybrid": "3"}
 
 SORT_BY_MAP = {"date": "DD", "relevance": "R"}
 
+# Easy Apply is ``f_AL=true``. ``f_EA=true`` is a different filter, "Under 10
+# applicants", and the redesigned search applies it without complaint, so a
+# search sent with it returns early-applicant postings that read as Easy Apply
+# ones. Measured on the redesigned search's own filter bar (#1459): the Easy
+# Apply toggle writes ``f_AL=true``, the route keeps it through the
+# ``/jobs/search/`` redirect, and ``f_EA=true`` checks "Under 10 applicants".
+_EASY_APPLY_PARAM = "f_AL=true"
+
 # Content (post) search uses literal ``datePosted`` tokens inside a JSON-list
 # facet, e.g. ``datePosted=["past-week"]`` — unlike job search, which uses
 # ``f_TPR=r<seconds>`` codes. The three hyphenated values are LinkedIn's
@@ -72,9 +80,22 @@ CONTENT_TYPE_MAP = {
     "documents": "documents",
 }
 
+CONTENT_SORT_BY_MAP = {
+    "date": "date_posted",
+    "relevance": "relevance",
+}
+
 # Valid tokens for the people-search ``network`` facet.
 # LinkedIn accepts "F" (1st-degree), "S" (2nd-degree), "O" (3rd-degree and beyond).
 NETWORK_TOKENS = ("F", "S", "O")
+
+# The ``connectionOf`` facet takes a member's profile id, the ``ACoA...`` value
+# ``get_person_profile`` returns as ``profile_urn``. A vanity name or any other
+# string is accepted by the URL and then dropped, so it is refused here. The
+# ``urn:li:fsd_profile:`` form is accepted and reduced to the bare id the facet
+# carries.
+_PROFILE_URN_PREFIX = "urn:li:fsd_profile:"
+_CONNECTION_OF_ID = re.compile(r"ACoA[A-Za-z0-9_-]+")
 
 
 def _normalize_csv(value: str, mapping: dict[str, str]) -> str:
@@ -123,7 +144,7 @@ def build_job_search_url(
     if work_type:
         params += f"&f_WT={_normalize_csv(work_type, WORK_TYPE_MAP)}"
     if easy_apply:
-        params += "&f_EA=true"
+        params += f"&{_EASY_APPLY_PARAM}"
     if sort_by:
         mapped = SORT_BY_MAP.get(sort_by.strip(), sort_by)
         params += f"&sortBy={quote_plus(mapped)}"
@@ -136,14 +157,16 @@ def build_people_search_url(
     location: str | None = None,
     network: list[str] | None = None,
     current_company: str | None = None,
+    connection_of: str | None = None,
 ) -> str:
     """Build a LinkedIn people search URL, refusing filters LinkedIn ignores.
 
     Every refusal happens before a URL exists, so a workflow calling this can
     never navigate on a filter LinkedIn would swallow. An unknown ``network``
-    token, a plain-text ``location`` and a plain-text ``currentCompany`` are
-    each accepted by the URL and then dropped, which answers with the
-    unfiltered result set while the request still reads as filtered.
+    token, a plain-text ``location``, a plain-text ``currentCompany`` and a
+    ``connectionOf`` that is not a profile id are each accepted by the URL and
+    then dropped, which answers with the unfiltered result set while the
+    request still reads as filtered.
 
     ``location`` is the same shape of mistake as ``currentCompany``: people
     search filters on the numeric geo URN id via the ``geoUrn`` list facet, and
@@ -175,6 +198,18 @@ def build_people_search_url(
             f'URN via get_company_profile -> references["about"].'
         )
 
+    connection_of_id = (
+        connection_of.removeprefix(_PROFILE_URN_PREFIX) if connection_of else None
+    )
+    if connection_of_id is not None and not _CONNECTION_OF_ID.fullmatch(
+        connection_of_id
+    ):
+        raise FilterValidationError(
+            f"connection_of must be a LinkedIn profile id (e.g. 'ACoAAB...'); "
+            f"got {connection_of!r}. A vanity name is silently ignored by "
+            f'LinkedIn. Look up the id via get_person_profile -> "profile_urn".'
+        )
+
     params = f"keywords={quote_plus(keywords)}"
     if location:
         params += f"&geoUrn={_encode_list_facet([location])}"
@@ -182,6 +217,8 @@ def build_people_search_url(
         params += f"&network={_encode_list_facet(network)}"
     if current_company:
         params += f"&currentCompany={_encode_list_facet([current_company])}"
+    if connection_of_id:
+        params += f"&connectionOf={_encode_list_facet([connection_of_id])}"
 
     return f"https://www.linkedin.com/search/results/people/?{params}"
 
@@ -204,6 +241,7 @@ def build_content_search_url(
     keywords: str,
     date_posted: str | None = None,
     content_type: str | None = None,
+    sort_by: str | None = None,
 ) -> str:
     """Build a LinkedIn content (post) search URL.
 
@@ -221,6 +259,10 @@ def build_content_search_url(
 
     ``content_type`` is refused the same way and for the same reason. It is
     written after ``datePosted``, the order the live page produces.
+
+    ``sort_by`` accepts ``date`` for Latest and
+    ``relevance`` for Top match. It uses its own JSON-list facet, unlike
+    job search's ``sortBy=DD|R``. Omission keeps LinkedIn's default ordering.
     """
     if (
         date_posted is not None
@@ -242,6 +284,16 @@ def build_content_search_url(
             f"{list(CONTENT_TYPE_MAP)!r}."
         )
 
+    if (
+        sort_by is not None
+        and sort_by.strip()
+        and sort_by.strip() not in CONTENT_SORT_BY_MAP
+    ):
+        raise FilterValidationError(
+            f"Invalid sort_by {sort_by!r}; expected one of "
+            f"{list(CONTENT_SORT_BY_MAP)!r}."
+        )
+
     params = f"keywords={quote_plus(keywords)}&origin=FACETED_SEARCH"
     if date_posted and date_posted.strip():
         token = CONTENT_DATE_POSTED_MAP.get(date_posted.strip(), date_posted.strip())
@@ -249,4 +301,7 @@ def build_content_search_url(
     if content_type and content_type.strip():
         token = CONTENT_TYPE_MAP[content_type.strip()]
         params += f"&contentType={_encode_list_facet([token])}"
+    if sort_by and sort_by.strip():
+        token = CONTENT_SORT_BY_MAP[sort_by.strip()]
+        params += f"&sortBy={_encode_list_facet([token])}"
     return f"https://www.linkedin.com/search/results/content/?{params}"

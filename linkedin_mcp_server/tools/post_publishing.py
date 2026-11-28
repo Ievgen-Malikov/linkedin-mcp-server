@@ -63,6 +63,14 @@ def register_post_publishing_tools(
         """
         if not confirmed:
             return {"status": "confirmation_required", "published": False}
+        if not draft_id.strip():
+            raise CodedToolError(
+                "draft_id must not be empty.", ErrorCode.INVALID_ARGUMENT
+            )
+        try:
+            validate_post_text(approved_text)
+        except ValueError as exc:
+            raise CodedToolError(str(exc), ErrorCode.INVALID_ARGUMENT) from exc
         extractor = await get_ready_extractor(ctx, tool_name="publish_post")
         try:
             return await extractor.publish_post(

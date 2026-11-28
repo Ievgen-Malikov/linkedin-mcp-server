@@ -8,7 +8,9 @@ to the current workflow-owner modules, tool errors, and facade contracts.
 The adaptation remains under this repository's Apache-2.0 license.
 
 The two-step flow asks for approval of the exact text, personal author, and
-Anyone audience. A preview expires after ten minutes, belongs to its browser
+Anyone audience. Clients that support MCP form elicitation ask the user to
+confirm publication with the full text and audience before the write begins.
+A preview expires after ten minutes, belongs to its browser
 page, and permits one attempt. A changed composer, actor, audience, or draft
 is refused. An uncertain result is not permission to retry: inspect LinkedIn
 before taking another action.
