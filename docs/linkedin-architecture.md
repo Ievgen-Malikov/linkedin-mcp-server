@@ -21,7 +21,7 @@ a page-owning collaborator.
 | `connection` | `ActionSignals`, `ConnectionState`, `detect_connection_state()` | `browser-free` |
 | `connection_actions` | `ACTION_SIGNALS_JS`, `CLICK_INCOMING_ACCEPT_JS`, `ConnectionActions`, `INVITATION_PENDING_JS`, `OPEN_MORE_BUTTON_JS`, `ReadMainProfile`, `SENT_INVITATIONS_URL` | `page-owning` |
 | `content` | `PageContentReader` | `page-owning` |
-| `contracts` | `ExtractedSection`, `FilterValidationError`, `RATE_LIMITED_SECTION_TEXT`, `SEND_INTERRUPTED_WARNING`, `before_the_reply_deadline()`, `message_action_result()`, `normalize_message_text()`, `rate_limited_section_error()`, `refuse_an_invalid_message()`, `refuse_an_invalid_reply()`, `reply_action_result()` | `browser-free` |
+| `contracts` | `ExtractedSection`, `FilterValidationError`, `RATE_LIMITED_SECTION_TEXT`, `SEND_INTERRUPTED_WARNING`, `before_the_reply_deadline()`, `list_incomplete_section_error()`, `message_action_result()`, `normalize_message_text()`, `rate_limited_section_error()`, `refuse_an_invalid_message()`, `refuse_an_invalid_reply()`, `reply_action_result()` | `browser-free` |
 | `conversations` | `ConversationReader`, `THREAD_MENU_ITEMS_JS`, `THREAD_MENU_SURVEY_JS`, `THREAD_OPTIONS_JS`, `is_conversations_payload_response()`, `strip_select_conversation_prefix()`, `thread_categories()` | `page-owning` |
 | `extractor` | `LinkedInExtractor` | `page-owning` |
 | `feed` | `FEED_POST_BOUNDARIES_JS`, `FeedReader` | `page-owning` |
@@ -37,9 +37,9 @@ a page-owning collaborator.
 | `person` | `PersonReader` | `page-owning` |
 | `post_management` | `CLOSE_EMPTY_DIALOG_JS`, `COMPOSER_URL`, `PREFLIGHT_JS`, `PostManagement`, `PostQueueReadRefused`, `SCHEDULE_TEXT_EN`, `SCHEDULE_UI_JS`, `post_analytics_url()` | `page-owning` |
 | `post_reader` | `PostReader` | `browser-free` |
-| `posts` | `PostSearch` | `browser-free` |
+| `posts` | `PostSearch` | `page-owning` |
 | `profile_page` | `MessageTarget`, `MessageTargetResolution`, `ProfilePageReader`, `ReadMessageTarget` | `browser-free` |
-| `search_urls` | `CONTENT_DATE_POSTED_MAP`, `CONTENT_TYPE_MAP`, `EXPERIENCE_LEVEL_MAP`, `JOB_DATE_POSTED_MAP`, `JOB_TYPE_MAP`, `NETWORK_TOKENS`, `SORT_BY_MAP`, `WORK_TYPE_MAP`, `build_company_search_url()`, `build_content_search_url()`, `build_job_search_url()`, `build_people_search_url()` | `browser-free` |
+| `search_urls` | `CONTENT_DATE_POSTED_MAP`, `CONTENT_SORT_BY_MAP`, `CONTENT_TYPE_MAP`, `EXPERIENCE_LEVEL_MAP`, `JOB_DATE_POSTED_MAP`, `JOB_TYPE_MAP`, `NETWORK_TOKENS`, `SORT_BY_MAP`, `WORK_TYPE_MAP`, `build_company_search_url()`, `build_content_search_url()`, `build_job_search_url()`, `build_people_search_url()` | `browser-free` |
 | `session` | `NAV_DELAY`, `PageSession` | `page-owning` |
 | `text` | `CONVERSATION_ACTIONS_EN_US`, `ConversationActionTextTable`, `DETAIL_CAPTURE_EN_US`, `DetailCaptureTextTable`, `JOB_APPLY_EN_US`, `JOB_POSTING_EN_US`, `JOB_SEARCH_EN_US`, `JobApplyTextTable`, `JobPostingTextTable`, `JobSearchTextTable`, `SIDEBAR_CHROME_EN`, `SidebarChromeTable`, `filter_linkedin_noise_lines()`, `strip_conversation_chrome()`, `strip_linkedin_noise()`, `truncate_linkedin_noise()` | `browser-free` |
 
@@ -67,7 +67,7 @@ a page-owning collaborator.
 - `person` -> `capture`, `contracts`, `fields`, `identifiers`, `link_metadata`, `navigation`, `profile_page`, `search_urls`, `session`, `text`
 - `post_management` -> `capture`, `contracts`, `identifiers`, `navigation`, `session`
 - `post_reader` -> `capture`, `contracts`, `identifiers`
-- `posts` -> `capture`, `contracts`, `link_metadata`, `search_urls`
+- `posts` -> `capture`, `contracts`, `link_metadata`, `search_urls`, `session`
 - `profile_page` -> `session`
 - `search_urls` -> `contracts`
 - `session` -> _(none)_

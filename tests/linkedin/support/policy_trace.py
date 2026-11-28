@@ -680,6 +680,7 @@ def semantic_program_id(program: str) -> str:
         ("performance.timeOrigin", "document_origin"),
         ("element.ownerDocument.location.href", "owner_document_address"),
         ("MAX_HEADING_CONTAINERS", "root_content"),
+        ("wheelLoadMain", "wheel_load_text_length"),
         ("reason: 'existing_dialog'", "post_schedule_preflight"),
         ("dialog.__linkedinMcpScheduleRead = token", "post_schedule_ui"),
         (
